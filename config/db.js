@@ -1,6 +1,6 @@
 'use strict';
 const Sequelize = require('sequelize');
-const sequelize = new Sequelize('szjkj', 'root', 'root', {
+const sequelize = new Sequelize('test', 'root', 'szj2017news', {
     host: '127.0.0.1',
     dialect: 'mysql',
     delegate: 'model',
