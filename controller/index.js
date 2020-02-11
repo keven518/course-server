@@ -32,7 +32,8 @@ module.exports = class Index extends Base {
             password:that.rule.name('管理员密码').required().min_length(6).max_length(20),
             role_id:that.rule.name('角色ID').default(1).required().number(),
             status:that.rule.name('管理员状态').default(0).number(),
-            login_count:that.rule.name('登陆次数').default(0).number()
+            login_count:that.rule.name('登陆次数').default(0).number(),
+            user_token:that.rule.name('标志位').default('')
         };
     }
 
