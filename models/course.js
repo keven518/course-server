@@ -3,6 +3,7 @@
 const szjcomo 	= require('@szjcomo/szjvuetools');
 const dbConfig  = require('../config/db');
 const Sequelize = require('sequelize');
+const CourseCategory = require('./course_category');
 
 const model = dbConfig.define('Course',{
     course_id:{
@@ -98,4 +99,5 @@ const model = dbConfig.define('Course',{
 
 //同步:没有就新建,有就不变
 model.sync();
+model.belongsTo(CourseCategory,{foreignKey:'category_id',targetKey:'category_id',as:'category'});
 module.exports = model;

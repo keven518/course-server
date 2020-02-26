@@ -2,7 +2,7 @@
 
 const baseController = require('./base');
 const szjcomo        = require('@szjcomo/szjvuetools');
-
+const Sequelize      = require('sequelize');
 
 /**
  * 课程控制器
@@ -23,7 +23,8 @@ class Course extends baseController {
             sort:that.rules.default(0).number(),
             order:that.rules.default('course_id').required(),
             is_show:that.rules.default(1).number(),
-            course_title:that.rules.default('').required()
+            course_title:that.rules.default('').required(),
+            category_id:that.rules.default(0).number()
         };
     }
     /**
@@ -54,6 +55,7 @@ class Course extends baseController {
             author_image:that.rules.name('作者头像').required().min_length(5).max_length(255),
             course_trait:that.rules.name('课程特点').required(),
             tearch_desc:that.rules.name('老师介绍').required(),
+            category_id:that.rules.name('课程分类ID').required().number(),
             is_show:that.rules.default(1).number(),
             study_nums:that.rules.default(100).number(),
             course_score:that.rules.default(9.5).number(),
@@ -74,11 +76,18 @@ class Course extends baseController {
         try {
             let data = await that.ctx.validate(that.listValidate,await that.get());
             if(data.course_id > 0) return that.appJson(await that.info(data.course_id));
-            let options = {limit:data.limit,offset:(data.page - 1) * data.limit,where:{}};
+            let options = {
+                limit:data.limit,offset:(data.page - 1) * data.limit,where:{},
+                include:{model:that.ctx.model.CourseCategory,attributes:[],as:'category'}
+            };
             if(data.is_show > -1) options.where.is_show = data.is_show;
             if(data.course_title.length > 0) options.where.course_title = {[that.ctx.app.Sequelize.Op.like]:'%'+data.course_title+'%'};
+            if(data.category_id > 0) options.where.category_id = data.category_id;
             options.order = [[data.order,data.sort?'desc':'asc']];
-            options.attributes = {exclude:['course_images','tearch_desc','course_trait']};
+            options.attributes = {
+                exclude:['course_images','tearch_desc','course_trait'],
+                include:[[Sequelize.col('category.category_name'),'category_name']]
+            };
             let result = await that.ctx.service.base.selectAndCount(options,that.ctx.model.Course,'课程列表');
             return that.appJson(result);
         } catch(err) {
@@ -108,7 +117,11 @@ class Course extends baseController {
     async add() {
         let that = this;
         try {
+            let course_trait = await that.post('course_trait','',function(val){return val;});
+            let tearch_desc  = await that.post('tearch_desc','',function(val){return val;});
             let data = await that.ctx.validate(that.addValidate,await that.post());
+            if(data.course_trait && data.course_trait.length > 0) data.course_trait = course_trait;
+            if(data.course_trait && data.tearch_desc.length > 0) data.tearch_desc = tearch_desc;
             if(data.course_images && data.course_images.length > 0) {
                 data.course_images = szjcomo.json_encode(data.course_images);
             }
@@ -127,7 +140,11 @@ class Course extends baseController {
     async update() {
         let that = this;
         try {
+            let course_trait = await that.post('course_trait','',function(val){return val;});
+            let tearch_desc  = await that.post('tearch_desc','',function(val){return val;});
             let data = await that.ctx.validate(that.pkValidate,await that.param());
+            if(data.course_trait && data.course_trait.length > 0) data.course_trait = course_trait;
+            if(data.course_trait && data.tearch_desc.length > 0) data.tearch_desc = tearch_desc;
             let course_id = data.course_id;
             delete data.course_id;
             if(data.course_images && data.course_images.length > 0) {
@@ -148,7 +165,7 @@ class Course extends baseController {
     async delete() {
         let that = this;
         try {
-            let data = await that.ctx.validate(that.pkValidate,await that.param());
+            let data   = await that.ctx.validate(that.pkValidate,await that.param());
             let result = await that.deleteHandler(data.course_id);
             return that.appJson(result);
         } catch(err) {
@@ -164,7 +181,7 @@ class Course extends baseController {
     async deleteHandler(course_id) {
         let that = this;
         let courseCount = await that.ctx.model.CourseChapter.count({where:{course_id:course_id}});
-        if(courseCount > 0) return that.appResult('当前课程下还有视频或文章,无法删除');
+        if(courseCount > 0) return that.appResult('当前课程下还有章节的视频或文章,无法删除');
         let result = await that.ctx.service.base.delete({where:{course_id:course_id}},that.ctx.model.Course,'课程');
         return result;
     }

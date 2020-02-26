@@ -128,7 +128,9 @@ class Product extends baseController {
     async add() {
         let that = this;
         try {
+            let content = await that.post('content','',function(val){return val;});
             let data = await that.ctx.validate(that.addValidate,await that.post());
+            data.content = content;
             if(data.images && data.images.length > 0) data.images = szjcomo.json_encode(data.images); 
             if(!data.product_sn) data.product_sn = szjcomo.date('YmdHis') + '' + szjcomo.mt_rand(1000,9999);
             data.admin_id = await that.ctx.service.base.getAdminUserId();
@@ -182,7 +184,9 @@ class Product extends baseController {
     async update() {
         let that = this;
         try {
+            let content = await that.post('content','',function(val){return val;});
             let data = await that.ctx.validate(that.pkValidate,await that.param());
+            if(content.length > 0) data.content = content;
             if(data.images && data.images.length > 0) data.images = szjcomo.json_encode(data.images);
             data.admin_id = await that.ctx.service.base.getAdminUserId();
             let result = await that.updateHandler(data);

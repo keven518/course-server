@@ -111,7 +111,9 @@ class CourseChapter extends baseController {
     async add() {
         let that = this;
         try {
+            let chapter_content = await that.post('chapter_content','',function(val){return val;});
             let data = await that.ctx.validate(that.addValidate,await that.post());
+            if(chapter_content.length > 0) data.chapter_content = chapter_content;
             let result = await that.ctx.service.base.add(data,that.ctx.model.CourseChapter,'课程单节');
             return that.appJson(result);
         } catch(err) {
@@ -127,7 +129,9 @@ class CourseChapter extends baseController {
     async update() {
         let that = this;
         try {
+            let chapter_content = await that.post('chapter_content','',function(val){return val;});
             let data = await that.ctx.validate(that.pkValidate,await that.param());
+            if(chapter_content.length > 0) data.chapter_content = chapter_content;
             let chapter_id = data.chapter_id;
             delete data.chapter_id;
             let result = await that.ctx.service.base.update(data,{where:{chapter_id:chapter_id},fiedls:Object.keys(data)},that.ctx.model.CourseChapter,'课程章节');
