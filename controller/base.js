@@ -1,21 +1,57 @@
 'use strict';
 
 const {comoRules,validate} 	= require('como-validator');
-const utils                 = require('../utils/app'); 
+const utils                 = require('../utils/app');
+const serviceBase 			= require('../service/base');
+const Attachment 			= require('../models/attachment');
+const CollectAddress 		= require('../models/collect_address');
+const Configs 				= require('../models/configs');
+const CourseCategory 		= require('../models/course_category');
+const CourseChapter 		= require('../models/course_chapter');
+const Course				= require('../models/course');
+const Express 				= require('../models/express');
+const FieldType 			= require('../models/field_type');
+const ProductCategory 		= require('../models/product_category');
+const ProductExtend 		= require('../models/product_extend');
+const Product 				= require('../models/product');
 
 /** 
  * 控制器基类
 */
 module.exports = class base {
 
+
     /**
      *Creates an instance of base.
      * @param {*} ctx
      */
     constructor(ctx) {
-        this.ctx = ctx;
-        this.debug = true;
-    }
+		this.ctx = ctx;
+		this.ctx.validate = this.validator;
+		this.ctx.rules = this.rules;
+		this.ctx.model = {};
+		this.debug = true;
+		this.ctx.service  = {};
+		this.ctx.service.base = new serviceBase();
+		this.initLoadModels();
+	}
+	/**
+	 * 加载models
+	 */
+	initLoadModels() {
+		let that = this;
+		that.ctx.model.Attachment = Attachment;
+		that.ctx.model.CollectAddress = CollectAddress;
+		that.ctx.model.Configs = Configs;
+		that.ctx.model.CourseCategory = CourseCategory;
+		that.ctx.model.CourseChapter = CourseChapter;
+		that.ctx.model.Course = Course;
+		that.ctx.model.Express = Express;
+		that.ctx.model.FieldType =FieldType;
+		that.ctx.model.ProductCategory = ProductCategory;
+		that.ctx.model.ProductExtend = ProductExtend;
+		that.ctx.model.Product = Product;
+	}
     /**
      * 控制器统一返回值
      *
@@ -35,14 +71,20 @@ module.exports = class base {
     Json(data = {}) {
         let that = this;
         return that.ctx.body = data;
-    }
-
+	}
+	/**
+	 * 响应json数据
+	 * @param {*} data 
+	 */
+	appJson(data) {
+		return this.Json(data);
+	}
     /**
      * 获取验证规则
      *
      * @readonly
      */
-    get rule() {
+    get rules() {
         return comoRules.getInstance();
     }
     /**
@@ -108,7 +150,20 @@ module.exports = class base {
 	async get(name = null,defaults = null,handler = null){
         let that = this;
 		return await that.params_handler(JSON.parse(JSON.stringify(that.ctx.query)),name,defaults,handler);
-    }
+	}
+	
+	/**
+	 * [param 获取请求参数]
+	 * @Author   szjcomo
+	 * @DateTime 2019-10-03
+	 * @return   {[type]}   [description]
+	 */
+	async param(name = null,defaults = null,handler = null){
+		let that = this;
+		let result = Object.assign(that.ctx.request.body,that.ctx.query);
+		return await that.params_handler(result,name,defaults,handler);
+	}
+
 	/**
 	 * [params_handler 统一的参数请求处理]
 	 * @Author   szjcomo
